@@ -15,10 +15,12 @@ def main(grid: Grid, context: Context) -> None:
     
     strategy = FedAvg()
     
+    # Customize the strategy further
     result = strategy.start(
         grid=grid,
         initial_arrays=arrays,
         num_rounds=num_rounds
     )
-    pass
+    
+    # Results for later use
 

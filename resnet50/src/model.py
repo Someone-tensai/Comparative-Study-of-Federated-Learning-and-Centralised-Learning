@@ -1,11 +1,14 @@
+import torch.nn as nn
+from torchvision import models
 # Model Definition
 def our_model():
-    pass
+    resnet50 = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+    num_classes = 4
 
-# Training Function
-def train_function():
-    pass
+    for param in resnet50.parameters():
+        param.requires_grad = False
 
-# Testing Function
-def test_function():
-    pass
+    num_features = resnet50.fc.in_features
+    resnet50.fc = nn.Linear(num_features, num_classes)
+    
+    return resnet50

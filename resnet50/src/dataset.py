@@ -1,4 +1,4 @@
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader,WeightedRandomSampler
 # Code to Load and send the testing and training dataset
 
 def train_loader():

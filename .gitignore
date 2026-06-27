@@ -1,0 +1,125 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django/Flask/ FastAPI specific (if applicable)
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Virtual environments & Dependencies
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook & Checkpoints
+.ipynb_checkpoints
+*.ipynb
+
+# IDEs & System files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.pyt
+*.sublime-project
+*.sublime-workspace
+
+# ==========================================
+# Machine Learning & Deep Learning Artifacts
+# ==========================================
+
+# Model Checkpoints & Weights
+*.pt
+*.pth
+*.ckpt
+*.pb
+*.h5
+*.keras
+*.onnx
+*.weights
+models/
+saved_models/
+
+# Datasets (CSV, Images, Numpy, TFRecords, etc.)
+data/
+datasets/
+input/
+output/
+*.csv
+*.xlsx
+*.parquet
+*.pkl
+*.h5
+*.hdf5
+*.npz
+*.npy
+*.tfrecord
+*.lmdb
+
+# TensorBoard & MLflow Logs
+runs/
+logs/
+mlruns/
+wandb/
+
+# Temporary / Scratch scripts
+temp/
+scratch/
+notebooks/sandbox/
+
+# my virtual environment
+flvcl/

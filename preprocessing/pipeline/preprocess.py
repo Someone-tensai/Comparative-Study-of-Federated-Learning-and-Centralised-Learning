@@ -1,14 +1,15 @@
 # Read image from the folder and apply  CLAHE+ minmax normalization
 
 import cv2
+import csv
 import numpy as np
 from pathlib import Path
 from PIL import Image
 
 from config import(
     RAW_DATA,PROCESSED,
-    CLASSES, SPLITS, VALIT_EXTS,
-    IMG_SIZE, CLAHE_CLIP_LIMIT, CLAHE_TITLE_GRID
+    CLASSES, SPLITS, VALID_EXTS,
+    IMG_SIZE, CLAHE_CLIP_LIMIT, CLAHE_TILE_GRID
 )
 
 def apply_clahe (img_gray:np.ndarray)->np.ndarray:
@@ -16,7 +17,7 @@ def apply_clahe (img_gray:np.ndarray)->np.ndarray:
 
     clahe = cv2.createCLAHE(
         clipLimit = CLAHE_CLIP_LIMIT,
-        titleGridSize = CLAHE_TITLE_GRID,
+        tileGridSize = CLAHE_TILE_GRID,
     )
     return clahe.apply(img_gray)
 
@@ -59,21 +60,27 @@ def run():
     total_skipped = 0
 
     for split in SPLITS:
+        dst_dir = PROCESSED / split 
+        dst_dir.mkdir(parents = True, exist_ok= True)
+        labels_csv = PROCESSED / f"{split}_labels.csv"
+        csvfile = open(labels_csv,"w",newline="")
+        writer = csv.writer(csvfile)
+        writer.writerow(["filename","label"])
         for cls in CLASSES:
             src_dir = RAW_DATA / split / cls
-            dst_dir = PROCESSED / split / cls
-
+            
             if not src_dir.exists():
                 print(f" Source folder missing {src_dir}")
                 continue
-            files = [f for f in src_dir.iterdir() if f.suffix in VALIT_EXTS]
+            files = [f for f in src_dir.iterdir() if f.suffix in VALID_EXTS]
             ok = 0
             skipped = 0
 
             for f in files:
-                dst = dst_dir / f.stem
+                dst = dst_dir / f"{cls}_{f.stem}"
                 try:
                     process_image(f,dst)
+                    writer.writerow([dst.with_suffix(".jpg").name, cls])  
                     ok+=1
                 except Exception as e:
                     print(f"Skipped {f.name}: {e}")
@@ -82,11 +89,12 @@ def run():
             print(f"{split}/{cls}: {ok} processed, {skipped} skipped")
             total_ok += ok
             total_skipped += skipped
+        
+        csvfile.close()
+    print(f"\n Done. {total_ok} images saved to {PROCESSED}")
 
-            print(f"\n Done. {total_ok} images saved to {PROCESSED}")
-
-            if total_skipped:
-                print(f"{total_skipped} images skipped")
+    if total_skipped:
+        print(f"{total_skipped} images skipped")
 
 if __name__ =="__main__":
     run()

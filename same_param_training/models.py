@@ -10,7 +10,6 @@ def our_model(name, freeze_backbone=True):
     
     num_classes = 4
     
-    # In each, we take the pretrained model and change its final layer output to 4 classes(our output)
     if name == "resnet50":
         model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
         
@@ -21,10 +20,9 @@ def our_model(name, freeze_backbone=True):
         model.fc = nn.Linear(num_features, num_classes)
   
     if name == "resnet18":
-        model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        model = models.resnet18(weights=models.ResNet50_Weights.DEFAULT)
         
-        if freeze_backbone:
-            model = freeze_resnet(model)
+        model = freeze_resnet(model)
             
         num_features = model.fc.in_features
         model.fc = nn.Linear(num_features, num_classes)
@@ -42,8 +40,11 @@ def our_model(name, freeze_backbone=True):
     return model
 
 def freeze_resnet(model):
-    for param in model.parameters():
-        param.requires_grad = False
+    for name,param in model.named_parameters():
+        if "layer4" in name:
+            param.requires_grad=True
+        else:
+            param.requires_grad=False
     return model
 
 def freeze_vgg(model):

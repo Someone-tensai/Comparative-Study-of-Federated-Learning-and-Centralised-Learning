@@ -60,41 +60,42 @@ def run():
     total_skipped = 0
 
     for split in SPLITS:
-        dst_dir = PROCESSED / split 
-        dst_dir.mkdir(parents = True, exist_ok= True)
-        labels_csv = PROCESSED / f"{split}_labels.csv"
-        csvfile = open(labels_csv,"w",newline="")
-        writer = csv.writer(csvfile)
-        writer.writerow(["filename","label"])
+        dst_dir = PROCESSED / split
+        dst_dir.mkdir(parents=True, exist_ok=True)
+
+
         for cls in CLASSES:
             src_dir = RAW_DATA / split / cls
-            
+
             if not src_dir.exists():
-                print(f" Source folder missing {src_dir}")
+                print(f"Source folder missing {src_dir}")
                 continue
+
             files = [f for f in src_dir.iterdir() if f.suffix in VALID_EXTS]
+
             ok = 0
             skipped = 0
 
             for f in files:
-                dst = dst_dir / f"{cls}_{f.stem}"
+                # Preserve the class directory
+                dst = dst_dir / cls / f.stem
+
                 try:
-                    process_image(f,dst)
-                    writer.writerow([dst.with_suffix(".jpg").name, cls])  
-                    ok+=1
+                    process_image(f, dst)
+                    ok += 1
+
                 except Exception as e:
                     print(f"Skipped {f.name}: {e}")
-                    skipped+=1
-                
+                    skipped += 1
+
             print(f"{split}/{cls}: {ok} processed, {skipped} skipped")
+
             total_ok += ok
             total_skipped += skipped
-        
-        csvfile.close()
-    print(f"\n Done. {total_ok} images saved to {PROCESSED}")
+            
+    print(f"\nDone. {total_ok} images saved to {PROCESSED}")
 
     if total_skipped:
         print(f"{total_skipped} images skipped")
-
 if __name__ =="__main__":
     run()

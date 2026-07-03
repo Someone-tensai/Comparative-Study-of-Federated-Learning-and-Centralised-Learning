@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from src.dataset import train_loader, test_loader
+from same_param_training.dataset import train_loader, test_loader
 LOCAL_EPOCHS = 2
 def train_model(model, trainloader):
     

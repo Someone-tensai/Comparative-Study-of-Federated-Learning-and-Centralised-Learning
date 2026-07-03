@@ -1,12 +1,14 @@
 import torch
 import torch.nn as nn
-from same_param_training.dataset import train_loader, test_loader
+from same_param_training.dataset import get_train_loader, get_test_loader, get_val_loader
 LOCAL_EPOCHS = 2
 def train_model(model, trainloader):
     
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.fc.parameters(), lr=0.001)
     
+    train_loader = get_train_loader()
+    val_loader = get_val_loader()
     # Put the Model in training mode
     model.train()
     # Training Code

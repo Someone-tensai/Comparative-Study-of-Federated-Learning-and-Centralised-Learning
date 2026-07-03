@@ -4,7 +4,7 @@ import shutil
 import numpy as np
 from pathlib import Path
 
-from config import(
+from common.config import(
     PROCESSED,
     CLASSES,
     VAL_FRACTION,

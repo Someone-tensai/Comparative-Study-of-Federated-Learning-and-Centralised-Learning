@@ -11,8 +11,8 @@ app = ClientApp()
 @app.train()
 def train(msg: Message, context: Context):
     
-    freeze_backbone = context.run_config["freeze_backbone"]
-    model_name = context.run_config["model_name"]
+    freeze_backbone = context.run_config["freeze-backbone"]
+    model_name = context.run_config["model-name"]
     # Define the Model
     model = our_model(model_name, freeze_backbone)
     client_id = context.node_config["partition-id"]+1

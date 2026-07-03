@@ -9,7 +9,7 @@ app = ServerApp()
 def main(grid: Grid, context: Context) -> None:
     
     num_rounds = context.run_config["num-server-rounds"]
-    model_name = context.run_config["model_name"]
+    model_name = context.run_config["model-name"]
     model = our_model(model_name)
     arrays = ArrayRecord(model.state_dict())
     

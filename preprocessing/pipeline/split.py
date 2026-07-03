@@ -53,7 +53,7 @@ def make_val_split()-> dict[str,list[Path]]:
     for cls in CLASSES:
         src_dir = PROCESSED / "Train" / cls
         if not src_dir.exists():
-            print("Src {src_dir} not found Run preprocess.py first")
+            print(f"Src {src_dir} not found Run preprocess.py first")
             continue
         
         files = sorted(src_dir.glob("*.jpg"))

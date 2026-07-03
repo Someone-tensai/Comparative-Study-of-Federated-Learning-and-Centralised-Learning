@@ -1,12 +1,10 @@
 # Read image from the folder and apply  CLAHE+ minmax normalization
-
 import cv2
-import csv
 import numpy as np
 from pathlib import Path
 from PIL import Image
 
-from config import(
+from common.config import(
     RAW_DATA,PROCESSED,
     CLASSES, SPLITS, VALID_EXTS,
     IMG_SIZE, CLAHE_CLIP_LIMIT, CLAHE_TILE_GRID

@@ -19,9 +19,11 @@ packages = ["."]
 # Point to your ServerApp and ClientApp objects
 # Format: "<module>:<object>"
 [tool.flwr.app.components]
-serverapp = "src.server_app:app"
-clientapp = "src.client_app:app"
+serverapp = "same_param_training.server_app:app"
+clientapp = "same_param_training.client_app:app"
 
 # Custom config values accessible via `context.run_config`
 [tool.flwr.app.config]
-num-server-rounds = 3
+num-server-rounds = 20
+model_name = "resnet18"
+freeze_backbone = True

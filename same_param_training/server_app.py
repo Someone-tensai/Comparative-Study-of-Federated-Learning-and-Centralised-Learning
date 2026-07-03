@@ -1,12 +1,12 @@
 from flwr.serverapp import Grid, ServerApp
 from flwr.app import ArrayRecord, Context
 from flwr.serverapp.strategy import FedAvg
-from src.model import our_model
+from same_param_training.models import our_model
 
 app = ServerApp()
 
-@app.main()
-def main(grid: Grid, context: Context) -> None:
+@app.same_param_training()
+def same_param_training(grid: Grid, context: Context) -> None:
     
     num_rounds = context.run_config["num-server-rounds"]
     

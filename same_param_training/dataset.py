@@ -3,12 +3,13 @@ from torch.utils.data import DataLoader, Subset
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 
+# set ur own working directory root (Temporary Fix)
 PROCESSED = Path(r"C:\Users\Aspire\Desktop\Minor Project\Comparative-Study-of-Federated-Learning-and-Centralised-Learning\dataset\preprocessed")
 # Get transforms to apply on the image
 def get_transform():
     return transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5])
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     
 # Define the train data loader

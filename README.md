@@ -22,7 +22,7 @@
 
 Set the number of simulated clients (SuperNodes) — must match `--clients` used during preprocessing:
 ```bash
-!flwr federation simulation-config \
+flwr federation simulation-config \
   --num-supernodes 3 \
   --client-resources-num-cpus 2 \
   --client-resources-num-gpus 0.33

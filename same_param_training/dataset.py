@@ -1,6 +1,7 @@
 from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 PROCESSED = Path(r"C:\Users\Aspire\Desktop\Minor Project\Comparative-Study-of-Federated-Learning-and-Centralised-Learning\dataset\preprocessed")
 # Get transforms to apply on the image
@@ -26,17 +27,36 @@ def get_test_loader(batch_size = 32):
     )
     return DataLoader(dataset, batch_size=batch_size, shuffle=False)
     
-# Define the validation data loader
-def get_val_loader(batch_size = 32):
-    dataset = datasets.ImageFolder(
-        PROCESSED / "Val",
-        transform=get_transform()
-    )
-    return DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+def get_client_loader(client_id, n_clients, mode, batch_size=32, val_fraction=0.1):
     
-def get_client_loader(client_id, n_clients, mode, batch_size=32):
     dataset = datasets.ImageFolder(
         PROCESSED / f"clients_{n_clients}_{mode}" / f"client_{client_id}",
-        transform=get_transform()
+        transform=get_transform(),
     )
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+    indices = list(range(len(dataset)))
+
+    train_idx, val_idx = train_test_split(
+        indices,
+        test_size=val_fraction,
+        stratify=dataset.targets,
+        random_state=42,
+    )
+
+    train_dataset = Subset(dataset, train_idx)
+    val_dataset = Subset(dataset, val_idx)
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+    )
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+    )
+
+    return train_loader, val_loader

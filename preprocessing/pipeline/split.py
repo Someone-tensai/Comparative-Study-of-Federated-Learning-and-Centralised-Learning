@@ -7,65 +7,17 @@ from pathlib import Path
 from common.config import(
     PROCESSED,
     CLASSES,
-    VAL_FRACTION,
     RANDOM_SEED,
     NONIID_ALPHA,
 )
 
 #Helper
 
-def stratified_sample(
-        files:list[Path], fraction:float,seed:int
-)-> tuple[list[Path],list[Path]]:
-    
-    #Split files 
-    rng = random.Random(seed)
-    shuffled = files[:]
-    rng.shuffle(shuffled)
-    n = max(1,round(len(shuffled) * fraction))
-    return shuffled[:n], shuffled[n:]
-
 def copy_files(files: list[Path],dst_dir: Path)-> None:
     dst_dir.mkdir(parents = True, exist_ok = True)
     for f in files:
         shutil.copy2(f,dst_dir/f.name)
 
-def make_val_split()-> dict[str,list[Path]]:
-    # 10% from each class in Train to val
-    val_exists = all((PROCESSED / "Val" / cls).exists() for cls in CLASSES)
-
-    if val_exists:
-        print("Skipping because val split already exists")
-        # Still need to return train_remainder so client splits can use it
-        train_remainder = {}
-        for cls in CLASSES:
-            all_train = sorted((PROCESSED / "Train" / cls).glob("*.jpg"))
-            val_files = sorted((PROCESSED / "Val" /cls).glob("*.jpg"))
-            val_stems = {f.stem for f in val_files}
-            
-            train_remainder[cls] = [f for f in all_train if f.stem not in val_stems]
-
-            return train_remainder
-
-    print("Val Split")
-    train_remainder = {}
-
-    for cls in CLASSES:
-        src_dir = PROCESSED / "Train" / cls
-        if not src_dir.exists():
-            print(f"Src {src_dir} not found Run preprocess.py first")
-            continue
-        
-        files = sorted(src_dir.glob("*.jpg"))
-        val,remainder = stratified_sample(files, VAL_FRACTION, RANDOM_SEED)
-
-        copy_files(val,PROCESSED / "Val" / cls)
-        train_remainder[cls] = remainder 
-
-        print("{cls}: {len(remainder)} train | {len(val)} val")
-
-        return train_remainder
-    
     #IID PARTITIONING
 
 def make_iid_split(
@@ -75,7 +27,7 @@ def make_iid_split(
     )-> None:
         # Round-robin shuffle
 
-    print("\n IID split ({n_clients} clients)\n")
+    print(f"\n IID split ({n_clients} clients)\n")
 
     rng = random.Random(RANDOM_SEED + 1)
 
@@ -88,14 +40,14 @@ def make_iid_split(
         rng.shuffle(shuffled)
 
         chunks: list[list[Path]] = [[] for _ in range(n_clients)]
-    for i, f in enumerate(shuffled):
-        chunks[i % n_clients].append(f)
+        for i, f in enumerate(shuffled):
+            chunks[i % n_clients].append(f)
 
-    for idx, chunk in enumerate(chunks, start=1):
-        copy_files(chunk, out_root / f"client_{idx}" / cls)
+        for idx, chunk in enumerate(chunks, start=1):
+            copy_files(chunk, out_root / f"client_{idx}" / cls)
 
-    sizes = [len(c) for c in chunks]
-    print(f"  {cls}: {sizes}")
+        sizes = [len(c) for c in chunks]
+        print(f"  {cls}: {sizes}")
 
  
 # Non IID (Drichlet partitioning)
@@ -158,7 +110,7 @@ def make_noniid_split(
  
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Split preprocessed data into Val + federated client partitions"
+        description="Split preprocessed data + federated client partitions"
     )
     parser.add_argument(
         "--clients",
@@ -178,7 +130,16 @@ def main() -> None:
     args = parse_args()
     n = args.clients
  
-    train_remainder = make_val_split()
+    train_remainder = {}
+
+    for cls in CLASSES:
+        src_dir = PROCESSED / "Train" / cls
+
+        if not src_dir.exists():
+            print(f"Missing {src_dir}")
+            continue
+
+        train_remainder[cls] = sorted(src_dir.glob("*.jpg"))
  
     if not train_remainder:
         print("[ERROR] No training data found. Run preprocess.py first.")
@@ -202,7 +163,6 @@ def main() -> None:
         print(f"\n  Saved → {out_root}")
  
     print(f"\nDone.")
-    print(f"  Val/              ← shared across all experiments")
     for mode in modes:
         print(f"  clients_{n}_{mode}/  ← {n}-client {mode} experiment")
  

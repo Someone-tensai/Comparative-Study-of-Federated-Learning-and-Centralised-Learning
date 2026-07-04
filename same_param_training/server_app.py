@@ -5,13 +5,13 @@ from same_param_training.models import our_model
 
 app = ServerApp()
 
-@app.same_param_training()
-def same_param_training(grid: Grid, context: Context) -> None:
+@app.main()
+def main(grid: Grid, context: Context) -> None:
     
     num_rounds = context.run_config["num-server-rounds"]
-    
-    model = our_model()
-    arrays = ArrayRecord(model)
+    model_name = context.run_config["model-name"]
+    model = our_model(model_name)
+    arrays = ArrayRecord(model.state_dict())
     
     strategy = FedAvg()
     

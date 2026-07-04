@@ -6,7 +6,7 @@ import cv2
 from pathlib import Path
 from PIL import Image
  
-from config import (
+from common.config import (
     RAW_DATA, PROCESSED,
     CLASSES,
     CLAHE_CLIP_LIMIT, CLAHE_TILE_GRID,

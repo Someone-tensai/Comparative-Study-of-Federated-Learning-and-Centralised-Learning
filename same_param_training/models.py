@@ -14,13 +14,13 @@ def our_model(name, freeze_backbone=True):
         model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
         
         if freeze_backbone:
-            model = freeze_resnet(model)
+            model = freeze_resnet_full(model)
             
         num_features = model.fc.in_features
         model.fc = nn.Linear(num_features, num_classes)
   
     if name == "resnet18":
-        model = models.resnet18(weights=models.ResNet50_Weights.DEFAULT)
+        model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
         
         model = freeze_resnet(model)
             
@@ -37,6 +37,12 @@ def our_model(name, freeze_backbone=True):
         model.classifier[6] = nn.Linear(num_features, num_classes)
 
     
+    return model
+
+def freeze_resnet_full(model):
+    """Freeze the entire backbone - used for resnet50."""
+    for param in model.parameters():
+        param.requires_grad = False
     return model
 
 def freeze_resnet(model):

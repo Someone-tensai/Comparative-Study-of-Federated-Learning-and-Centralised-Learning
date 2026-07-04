@@ -99,7 +99,7 @@ data/
 datasets/
 input/
 output/
-*.csv
+# *.csv
 *.xlsx
 *.parquet
 *.pkl
@@ -123,5 +123,5 @@ notebooks/sandbox/
 
 # my virtual environment
 flvcl/
-
+playground/
 preprocessed/

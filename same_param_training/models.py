@@ -14,7 +14,7 @@ def our_model(name, freeze_backbone=True):
         model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
         
         if freeze_backbone:
-            model = freeze_resnet_full(model)
+            model = freeze_resnet(model)
             
         num_features = model.fc.in_features
         model.fc = nn.Linear(num_features, num_classes)

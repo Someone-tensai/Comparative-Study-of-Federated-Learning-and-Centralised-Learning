@@ -10,6 +10,7 @@ description = "Federated Learning with Numpy and Flower (Demo)"
 dependencies = [
     "flwr[simulation]>=1.28.0",
     "numpy>=2.0.2",
+    "wandb>=0.18",
 ]
 [tool.flwr.app]
 publisher = "same_param_training"

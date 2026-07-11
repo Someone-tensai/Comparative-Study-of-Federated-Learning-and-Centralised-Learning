@@ -18,7 +18,18 @@
    python -m preprocessing.pipeline.split --clients 3 --mode both
 ```
 
-## C. Model Setup and Train
+### C.1 Weights & Biases Setup (for experiment tracking)
+
+1. Sign up for a free account at [wandb.ai](https://wandb.ai) if you don't already have one.
+
+2. Log in from your terminal (this will prompt for an API key, found on your [wandb settings page](https://wandb.ai/authorize)):
+```bash
+wandb login
+```
+
+3. Paste your API key when prompted. You only need to do this once per machine — Colab included, though the login will need to be redone each time a Colab runtime resets.
+
+## C.2 Model Setup and Train
 
 Set the number of simulated clients (SuperNodes) — must match `--clients` used during preprocessing:
 ```bash

@@ -125,5 +125,8 @@ notebooks/sandbox/
 
 # my virtual environment
 flvcl/
+
+preprocessed/
+results/
 playground/
 preprocessed/

@@ -4,6 +4,8 @@ from same_param_training.models import our_model
 from same_param_training.custom_strategy import WandbFedAvg
 import wandb
 from datetime import datetime
+import torch
+from pathlib import Path
 
 app = ServerApp()
 
@@ -20,18 +22,26 @@ def main(grid: Grid, context: Context) -> None:
         name=run_name,
         config=dict(context.run_config)
     )
-    model = our_model(model_name)
-    arrays = ArrayRecord(model.state_dict())
     
-    strategy = WandbFedAvg(save_path=f"results/{run_name}.json")
-    
-    # Customize the strategy further
-    result = strategy.start(
-        grid=grid,
-        initial_arrays=arrays,
-        num_rounds=num_rounds
-    )
-    
-            
-    wandb.finish()
+    try:
+        model = our_model(model_name)
+        arrays = ArrayRecord(model.state_dict())
+        
+        strategy = WandbFedAvg(save_path=f"results/{run_name}.json")
+        
+        # Customize the strategy further
+        result = strategy.start(
+            grid=grid,
+            initial_arrays=arrays,
+            num_rounds=num_rounds
+        )
+        
+        final_arrays = result.arrays  # ArrayRecord with the final global weights
+        state_dict = final_arrays.to_torch_state_dict()
+        model.load_state_dict(state_dict)
+        Path("results").mkdir(exist_ok=True)
+        torch.save(model.state_dict(), f"results/{run_name}.pth")
+        
+    finally:
+        wandb.finish()
 

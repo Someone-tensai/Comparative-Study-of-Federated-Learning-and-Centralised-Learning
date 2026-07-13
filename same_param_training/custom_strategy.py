@@ -5,6 +5,7 @@ from flwr.app import ArrayRecord, Message, MetricRecord
 from flwr.serverapp import Grid
 from flwr.serverapp.strategy import FedAvg
 import wandb
+import torch
 
 class WandbFedAvg(FedAvg):
     def __init__(self, *args, save_path : str = "results/history.json" ,**kwargs):
@@ -29,7 +30,17 @@ class WandbFedAvg(FedAvg):
         with open(self.save_path, "w") as f:
             json.dump(self.history, f, indent=2)
             
-            
+    def _save_checkpoint(self, server_round, arrays):
+        checkpoint_dir = Path("checkpoints")
+        checkpoint_dir.mkdir(exist_ok=True)
+
+        state_dict = arrays.to_torch_state_dict()
+
+        torch.save(
+            state_dict,
+            checkpoint_dir / f"round_{server_round}.pth"
+        )   
+          
     def aggregate_train(self, server_round, replies: Iterable[Message]):
         replies = list(replies)
         entry = self._get_round_entry(server_round)
@@ -47,7 +58,8 @@ class WandbFedAvg(FedAvg):
 
         # Actually call the aggregator from FedAvg
         arrays, agg_metrics = super().aggregate_train(server_round, replies)
-        
+
+        self._save_checkpoint(server_round, arrays)
         # Log the aggegrated metrics in wand and history
         if agg_metrics is not None:
             entry["aggregated_train_loss"] = agg_metrics.get("train_loss")

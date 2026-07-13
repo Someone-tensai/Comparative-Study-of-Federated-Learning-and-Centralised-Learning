@@ -60,6 +60,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+Minorvenv/
+minorvenv/
 
 # Jupyter Notebook & Checkpoints
 .ipynb_checkpoints
@@ -99,7 +101,7 @@ data/
 datasets/
 input/
 output/
-*.csv
+# *.csv
 *.xlsx
 *.parquet
 *.pkl
@@ -126,3 +128,5 @@ flvcl/
 
 preprocessed/
 results/
+playground/
+preprocessed/

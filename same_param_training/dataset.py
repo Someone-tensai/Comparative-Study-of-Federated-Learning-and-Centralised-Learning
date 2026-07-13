@@ -1,10 +1,9 @@
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset
-from pathlib import Path
 from sklearn.model_selection import train_test_split
 
-# set ur own working directory root (Temporary Fix)
-PROCESSED = Path(r"C:\Users\Aspire\Desktop\Minor Project\Comparative-Study-of-Federated-Learning-and-Centralised-Learning\dataset\preprocessed")
+from common.config import PROCESSED
+
 # Get transforms to apply on the image
 def get_transform():
     return transforms.Compose([

@@ -1,8 +1,12 @@
 import torch
 import torch.nn as nn
 
-def train_model(model, learning_rate, weight_decay , local_epochs, device, train_loader):
-    
+def train_model(model, learning_rate, weight_decay, local_epochs, device, train_loader, proximal_mu: float = 0.0):
+
+    # Snapshot global weights before local training starts — only used if proximal_mu > 0 (FedProx).
+    # Cheap to compute unconditionally since model.fc is small.
+    global_params = [p.detach().clone() for p in model.fc.parameters()]
+
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.fc.parameters(), lr=learning_rate, weight_decay=weight_decay)
     
@@ -25,6 +29,15 @@ def train_model(model, learning_rate, weight_decay , local_epochs, device, train
             
             # Loss using CrossEntropyLoss 
             loss = loss_fn(outputs, labels)
+
+            # FedProx term: penalizes drifting away from the global model.
+            # No-op when proximal_mu == 0.0 (i.e. plain FedAvg), so this is safe to leave in always.
+            if proximal_mu > 0:
+                proximal_term = sum(
+                    (local_p - global_p).norm(2) ** 2
+                    for local_p, global_p in zip(model.fc.parameters(), global_params)
+                )
+                loss = loss + (proximal_mu / 2) * proximal_term
             
             # Compute the gradients of the loss (Rn only one layer as all other layers are frozen)
             loss.backward()

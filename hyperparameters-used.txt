@@ -1,0 +1,37 @@
+1. DEFAULT 
+
+num-server-rounds = 20
+learning-rate = 0.001
+batch-size = 32
+local-epochs = 2
+model-name = "resnet18"
+weight-decay = 0.0001
+freeze-backbone = true
+mode = noniid and iid (2 runs)
+fed-strategy = "fedavg"
+
+
+2. LRR
+
+num-server-rounds = 20
+learning-rate = 0.0002
+batch-size = 32
+local-epochs = 2
+model-name = "resnet18"
+weight-decay = 0.0001
+freeze-backbone = true
+mode = noniid and iid (2 runs)
+fed-strategy = "fedavg"
+
+
+3. Increased Number of rounds
+
+num-server-rounds = 35
+learning-rate = 0.0002
+batch-size = 32
+local-epochs = 2
+model-name = "resnet18"
+weight-decay = 0.0001
+freeze-backbone = true
+mode = noniid
+fed-strategy = "fedavg"

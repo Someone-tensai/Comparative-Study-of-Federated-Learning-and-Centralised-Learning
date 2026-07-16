@@ -1,10 +1,12 @@
 #Shared configuration for the pipeline
-
+import os
 
 from pathlib import Path
 
-#Paths
-ROOT = Path(__file__).resolve().parents[1]
+if os.path.exists("/kaggle/working"):
+    ROOT = Path("/kaggle/working/Comparative-Study-of-Federated-Learning-and-Centralised-Learning")
+else:
+    ROOT = Path(__file__).resolve().parents[1]
 RAW_DATA = ROOT/ "dataset" / "Epic and CSCR hospital Dataset"
 PROCESSED = ROOT / "dataset" / "preprocessed"
 

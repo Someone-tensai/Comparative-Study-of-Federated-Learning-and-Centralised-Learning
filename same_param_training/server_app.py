@@ -2,6 +2,7 @@ from flwr.serverapp import Grid, ServerApp
 from flwr.app import ArrayRecord, Context
 from same_param_training.models import our_model
 from same_param_training.custom_strategy import WandbFedAvg
+from same_param_training.custom_strat_fed_prox import WandbFedProx
 import wandb
 from datetime import datetime
 import torch
@@ -14,8 +15,10 @@ def main(grid: Grid, context: Context) -> None:
     
     num_rounds = context.run_config["num-server-rounds"]
     model_name = context.run_config["model-name"]
+    strat = context.run_config["fed-strategy"]
+    mode = context.run_config["mode"]
     
-    run_name = f"{model_name}-{num_rounds}rounds-{datetime.now():%Y%m%d_%H%M%S}"
+    run_name = f"{model_name}-{mode}-{strat}-{num_rounds}-{datetime.now():%Y-%m-%d}"
 
     wandb.init(
         project="same_param_fed_training",
@@ -27,8 +30,10 @@ def main(grid: Grid, context: Context) -> None:
         model = our_model(model_name)
         arrays = ArrayRecord(model.state_dict())
         
-        strategy = WandbFedAvg(save_path=f"results/{run_name}.json")
-        
+        if(strat == "fedprox"):
+            strategy = WandbFedProx(save_path=f"results/{run_name}.json")
+        else:
+            strategy = WandbFedAvg(save_path=f"results/{run_name}.json")
         # Customize the strategy further
         result = strategy.start(
             grid=grid,

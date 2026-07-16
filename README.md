@@ -57,55 +57,11 @@ flwr run . --stream --run-config "model-name='resnet18' freeze-backbone=true"
 | `batch-size`          | Batch size per client (default: `32`)                                          |
 | `local-epochs`        | Number of local epochs per client, per round (default: `2`)                    |
 | `weight-decay`        | Weight decay for the optimizer (default: `0.0001`)                             |
+| `mode`                | Data partitioning mode — `iid` or `noniid` (default: `noniid`)                 |
+| `fed-strategy`        | Federated aggregation strategy — e.g. `fedavg`, `fedprox` (default: `fedavg`)  |
+| `proximal-mu`         | Proximal term weight, used when `fed-strategy='fedprox'` (default: `0.0`)      |
 
 **Example — combining multiple options in one run:**
 ```bash
-flwr run . --stream --run-config "model-name='resnet50' freeze-backbone=false local-epochs=3 learning-rate=0.0005"
+flwr run . --stream --run-config "model-name='resnet50' freeze-backbone=false local-epochs=3 learning-rate=0.0005 fed-strategy='fedprox' proximal-mu=0.01"
 ```
-
-## E. Running on Google Colab (GPU)
-
-1. Open a new notebook at [colab.research.google.com](https://colab.research.google.com), then set **Runtime → Change runtime type → GPU**.
-
-2. Clone the repo and move into it:
-```bash
-!git clone https://github.com/yourusername/Comparative-Study-of-Federated-Learning-and-Centralised-Learning.git
-%cd Comparative-Study-of-Federated-Learning-and-Centralised-Learning
-```
-
-3. Install dependencies:
-```bash
-!pip install -r requirements.txt
-```
-
-4. Run preprocessing and split (same as Sections B.1–B.2 above):
-```bash
-!python -m preprocessing.pipeline.preprocess
-!python -m preprocessing.pipeline.split --clients 3 --mode both
-```
-
-5. Set the simulation config, including GPU allocation for the Colab GPU (fractional value lets multiple clients share the single GPU concurrently — e.g. `0.33` allows all 3 clients to run in parallel on one T4):
-```bash
-!flwr federation simulation-config \
-  --num-supernodes 3 \
-  --client-resources-num-cpus 2 \
-  --client-resources-num-gpus 0.33
-```
-
-6. Verify the GPU is visible before training:
-```python
-import torch
-print(torch.cuda.is_available(), torch.cuda.get_device_name(0))
-```
-
-7. Train, same as Section D:
-```bash
-!flwr run . --stream --run-config "model-name='resnet18' freeze-backbone=true"
-```
-
-**Colab-specific notes:**
-| Note | Details |
-|------|---------|
-| Session timeout | Colab disconnects after ~90 min idle or ~12 hr max session — checkpoint periodically for long runs |
-| Save checkpoints to Drive | `from google.colab import drive; drive.mount('/content/drive')`, then point checkpoint paths to `/content/drive/MyDrive/...` |
-| Check current config | `!flwr config list` shows the active SuperLink connection and config file path |

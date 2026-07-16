@@ -16,6 +16,9 @@ def train(msg: Message, context: Context):
     learning_rate = context.run_config["learning-rate"]
     weight_decay = context.run_config["weight-decay"]
     local_epochs = context.run_config["local-epochs"]
+    mode = context.run_config["mode"]
+    proximal_mu = context.run_config["proximal-mu"]
+
     
     model = our_model(model_name, freeze_backbone)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -23,8 +26,8 @@ def train(msg: Message, context: Context):
     
     client_id = context.node_config["partition-id"]+1
     n_clients = context.node_config["num-partitions"]
-    
-    client_loader, _ = get_client_loader(client_id, n_clients, mode="noniid")
+
+    client_loader, _ = get_client_loader(client_id, n_clients, mode=mode)
 
     # Get Weights from the Server
     weights = msg.content["arrays"].to_torch_state_dict()
@@ -33,7 +36,7 @@ def train(msg: Message, context: Context):
     model.load_state_dict(weights)
        
     # Train the model  
-    train_loss = train_model(model, learning_rate, weight_decay, local_epochs, device, client_loader)
+    train_loss = train_model(model, learning_rate, weight_decay, local_epochs, device, client_loader, proximal_mu=proximal_mu)
     
     # Get New Model Weights
     new_weights = ArrayRecord(model.state_dict())
@@ -57,7 +60,7 @@ def evaluate(msg: Message, context: Context):
       
     freeze_backbone = context.run_config["freeze-backbone"]
     model_name = context.run_config["model-name"]
-    
+    mode = context.run_config["mode"]
     model = our_model(model_name, freeze_backbone)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -65,7 +68,7 @@ def evaluate(msg: Message, context: Context):
     client_id = context.node_config["partition-id"]+1
     n_clients = context.node_config["num-partitions"]
     
-    _, val_loader = get_client_loader(client_id, n_clients, mode="noniid")
+    _, val_loader = get_client_loader(client_id, n_clients, mode=mode)
     
     weights = msg.content["arrays"].to_torch_state_dict()
     

@@ -29,6 +29,7 @@ def get_test_loader(batch_size=32):
 
 
 def get_client_loader(client_id, n_clients, mode, batch_size=32, val_fraction= VAL_FRACTION):
+    #loads all the images belonging to one client
     dataset= datasets.ImageFolder(
         PROCESSED/ f"clients_{n_clients}_{mode}"/ f"client_{client_id}",
         transform=get_transform(),

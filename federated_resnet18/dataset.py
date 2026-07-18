@@ -28,7 +28,7 @@ def get_test_loader(batch_size=32):
     return DataLoader(dataset, batch_size= batch_size, shuffle=False)
 
 
-def get_client_loader(client_id, n_clients, mode, batch_size=32, val_fraction= VAL_FRACTION):
+def get_client_loader(client_id, n_clients, mode, batch_size=32, val_fraction= VAL_FRACTION): #splits data within each client into train and validation set
     #loads all the images belonging to one client
     dataset= datasets.ImageFolder(
         PROCESSED/ f"clients_{n_clients}_{mode}"/ f"client_{client_id}",

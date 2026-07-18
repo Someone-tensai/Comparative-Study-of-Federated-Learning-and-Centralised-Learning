@@ -70,3 +70,5 @@ train locally on this client's own data, send updated model + stats back to the 
 """
 
 @app.evaluate()
+def test():
+    pass

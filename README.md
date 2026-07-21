@@ -29,6 +29,11 @@ wandb login
 
 3. Paste your API key when prompted. You only need to do this once per machine — Colab included, though the login will need to be redone each time a Colab runtime resets.
 
+4. Make sure your runs point to the shared entity so they show up in the project:
+```python
+wandb.init(entity="paudelsulav5-fedlearnproject", project="same_param_fed_training")
+```
+
 ## C.2 Model Setup and Train
 
 Set the number of simulated clients (SuperNodes) — must match `--clients` used during preprocessing:

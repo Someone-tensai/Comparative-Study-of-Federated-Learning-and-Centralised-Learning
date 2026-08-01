@@ -1,3 +1,7 @@
+NOTEEEEEEE
+
+1-5 RUNS HAVE NOT WORKED WITH LAYER 4 IN RESNET 18
+
 1. DEFAULT 
 
 num-server-rounds = 20
@@ -46,4 +50,19 @@ model-name = "resnet18"
 weight-decay = 0.0001
 freeze-backbone = true
 mode = noniid 
+proximal-mu = 0.01
 fed-strategy = "fedprox"
+
+5. Augmented data
+num-server-rounds = 20
+learning-rate = 0.0002
+batch-size = 32
+local-epochs = 2
+model-name = "resnet18"
+weight-decay = 0.0001
+freeze-backbone = true
+mode = noniid 
+fed-strategy = "fedavg"
+
+NOTEEEEEEE
+RUNS NOW INCLUDE LAYER 4 TOO

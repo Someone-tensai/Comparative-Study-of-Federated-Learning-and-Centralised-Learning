@@ -17,8 +17,12 @@ def main(grid: Grid, context: Context) -> None:
     model_name = context.run_config["model-name"]
     strat = context.run_config["fed-strategy"]
     mode = context.run_config["mode"]
+    augmented = context.run_config["data-augmented"]
+    learning_rate = context.run_config["learning-rate"]
+    proximal_mu = context.run_config["proximal-mu"]
     
-    run_name = f"{model_name}-{mode}-{strat}-{num_rounds}-{datetime.now():%Y-%m-%d}"
+    
+    run_name = f"{model_name}-layer4_in-{mode}-{strat}-{num_rounds}-{"augmented" if augmented else ""}-{"Default" if learning_rate==0.001 else "LRR"}-{proximal_mu if proximal_mu != 0 else ""}-{datetime.now():%Y-%m-%d}"
 
     wandb.init(
         project="same_param_fed_training",
@@ -45,7 +49,7 @@ def main(grid: Grid, context: Context) -> None:
         state_dict = final_arrays.to_torch_state_dict()
         model.load_state_dict(state_dict)
         Path("results").mkdir(exist_ok=True)
-        torch.save(model.state_dict(), f"results/{run_name}.pth")
+        torch.save(model.state_dict(), f"kaggle/working/results/{run_name}.pth")
         
     finally:
         wandb.finish()

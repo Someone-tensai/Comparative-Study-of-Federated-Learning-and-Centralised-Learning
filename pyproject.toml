@@ -36,6 +36,7 @@ freeze-backbone = true
 mode = "noniid"
 fed-strategy = "fedavg"
 proximal-mu = 0.0
+data-augmented = false
 
 #######################################################################
 # CONFIGURATION MIGRATION NOTICE:

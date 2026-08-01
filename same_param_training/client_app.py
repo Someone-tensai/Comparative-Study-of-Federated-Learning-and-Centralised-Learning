@@ -18,7 +18,7 @@ def train(msg: Message, context: Context):
     local_epochs = context.run_config["local-epochs"]
     mode = context.run_config["mode"]
     proximal_mu = context.run_config["proximal-mu"]
-
+    augmented = context.run_config["data-augmented"]
     
     model = our_model(model_name, freeze_backbone)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -27,7 +27,7 @@ def train(msg: Message, context: Context):
     client_id = context.node_config["partition-id"]+1
     n_clients = context.node_config["num-partitions"]
 
-    client_loader, _ = get_client_loader(client_id, n_clients, mode=mode)
+    client_loader, _ = get_client_loader(client_id, n_clients, mode=mode, augmented=augmented)
 
     # Get Weights from the Server
     weights = msg.content["arrays"].to_torch_state_dict()
@@ -61,6 +61,7 @@ def evaluate(msg: Message, context: Context):
     freeze_backbone = context.run_config["freeze-backbone"]
     model_name = context.run_config["model-name"]
     mode = context.run_config["mode"]
+    augmented = context.run_config["data-augmented"]
     model = our_model(model_name, freeze_backbone)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -68,7 +69,7 @@ def evaluate(msg: Message, context: Context):
     client_id = context.node_config["partition-id"]+1
     n_clients = context.node_config["num-partitions"]
     
-    _, val_loader = get_client_loader(client_id, n_clients, mode=mode)
+    _, val_loader = get_client_loader(client_id, n_clients, mode=mode, augmented=augmented)
     
     weights = msg.content["arrays"].to_torch_state_dict()
     

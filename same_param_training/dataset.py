@@ -1,15 +1,16 @@
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import train_test_split
-
+from pathlib import Path
 from common.config import PROCESSED
 
 # Get transforms to apply on the image
 def get_transform():
     return transforms.Compose([
+        transforms.RandomRotation(degrees=15),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        transforms.RandomRotation(),
+        
     ])
     
 # Define the train data loader
@@ -29,10 +30,12 @@ def get_test_loader(batch_size = 32):
     return DataLoader(dataset, batch_size=batch_size, shuffle=False)
     
 
-def get_client_loader(client_id, n_clients, mode, batch_size=32, val_fraction=0.1):
+def get_client_loader(client_id, n_clients, mode, augmented , batch_size=32, val_fraction=0.1):
     
+    folder = f"clients_{n_clients}_augmented_{mode}" if augmented else f"clients_{n_clients}_{mode}"
+    path = Path(folder) / f"client_{client_id}"
     dataset = datasets.ImageFolder(
-        PROCESSED / f"clients_{n_clients}_{mode}" / f"client_{client_id}",
+        PROCESSED / path,
         transform=get_transform(),
     )
 

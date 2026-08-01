@@ -29,16 +29,21 @@ def parse_args() -> argparse.Namespace:
         help="Log to W&B every N epochs (see module docstring for the Adam-continuity trade-off).",
     )
     parser.add_argument("--wandb-project", type=str, default="centralized_training")
+    parser.add_argument(
+        "--wandb-entity", type=str, default="paudelsulav5-fedlearnproject",
+        help="Shared W&B entity — matches the README's C.1 setup, so this run shows "
+             "up in the same team project space as your federated runs.",
+    )
+
     return parser.parse_args()
  
  
 def main() -> None:
     args = parse_args()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
- 
+    
     run_name = f"{args.model_name}-centralized-{args.epochs}-{datetime.now():%Y-%m-%d}"
-    wandb.init(project=args.wandb_project, name=run_name, config=vars(args))
- 
+    wandb.init(entity=args.wandb_entity, project=args.wandb_project, name=run_name, config=vars(args)) 
     train_loader = get_train_loader(args.batch_size)
     test_loader = get_test_loader(args.batch_size)
  

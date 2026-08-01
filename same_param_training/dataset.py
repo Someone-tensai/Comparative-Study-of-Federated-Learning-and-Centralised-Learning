@@ -29,10 +29,14 @@ def get_test_loader(batch_size = 32):
     return DataLoader(dataset, batch_size=batch_size, shuffle=False)
     
 
-def get_client_loader(client_id, n_clients, mode, batch_size=32, val_fraction=0.1):
+def get_client_loader(client_id, n_clients, mode, augmented , batch_size=32, val_fraction=0.1):
     
+    if augmented:
+        path = f"clients_{n_clients}_augmented_{mode}" / f"client_{client_id}"
+    else:
+        path = f"clients_{n_clients}_{mode}" / f"client_{client_id}"
     dataset = datasets.ImageFolder(
-        PROCESSED / f"clients_{n_clients}_{mode}" / f"client_{client_id}",
+        PROCESSED / path,
         transform=get_transform(),
     )
 

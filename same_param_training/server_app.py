@@ -17,8 +17,9 @@ def main(grid: Grid, context: Context) -> None:
     model_name = context.run_config["model-name"]
     strat = context.run_config["fed-strategy"]
     mode = context.run_config["mode"]
-    
-    run_name = f"{model_name}-{mode}-{strat}-{num_rounds}-{datetime.now():%Y-%m-%d}"
+    augmented = context.run_config["data-augmented"]
+    learning_rate = context.run_config["learning-rate"]
+    run_name = f"{model_name}-{mode}-{strat}-{num_rounds}-{"augmented" if augmented else ""}-{"Default" if learning_rate==0.001 else "LRR"}-{datetime.now():%Y-%m-%d}"
 
     wandb.init(
         project="same_param_fed_training",

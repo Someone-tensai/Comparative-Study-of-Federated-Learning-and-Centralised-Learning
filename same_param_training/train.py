@@ -3,49 +3,39 @@ import torch.nn as nn
 
 def train_model(model, learning_rate, weight_decay, local_epochs, device, train_loader, proximal_mu: float = 0.0):
 
-    # Snapshot global weights before local training starts — only used if proximal_mu > 0 (FedProx).
-    # Cheap to compute unconditionally since model.fc is small.
-    global_params = [p.detach().clone() for p in model.fc.parameters()]
+    # Only regularize/optimize params that are actually trainable
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
+
+    # Snapshot global weights before local training starts
+    global_params = [p.detach().clone() for p in trainable_params]
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.fc.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    
-    # Put the Model in training mode
+    optimizer = torch.optim.AdamW(trainable_params, lr=learning_rate, weight_decay=weight_decay)
+
     model.train()
     running_loss = 0.0
-    # Training Code
     for epoch in range(local_epochs):
         for images, labels in train_loader:
-            
-            # Move to GPU
             images = images.to(device)
             labels = labels.to(device)
-            
-            # Reset gradients to zero for each batch
-            optimizer.zero_grad()
-            
-            # Forward Inference on the input images to get model predictions
-            outputs = model(images)
-            
-            # Loss using CrossEntropyLoss 
-            loss = loss_fn(outputs, labels)
 
-            # FedProx term: penalizes drifting away from the global model.
-            # No-op when proximal_mu == 0.0 (i.e. plain FedAvg), so this is safe to leave in always.
+            optimizer.zero_grad()
+            outputs = model(images)
+            task_loss = loss_fn(outputs, labels)
+            loss = task_loss
+
             if proximal_mu > 0:
                 proximal_term = sum(
                     (local_p - global_p).norm(2) ** 2
-                    for local_p, global_p in zip(model.fc.parameters(), global_params)
+                    for local_p, global_p in zip(trainable_params, global_params)
                 )
                 loss = loss + (proximal_mu / 2) * proximal_term
-            
-            # Compute the gradients of the loss (Rn only one layer as all other layers are frozen)
+
             loss.backward()
-            
-            # Propagate the gradients back and modify the weights
-            optimizer.step()    
-            running_loss += loss.item()
-    avg_train_loss = running_loss / (local_epochs * len(train_loader))       
+            optimizer.step()
+            running_loss += task_loss.item()
+
+    avg_train_loss = running_loss / (local_epochs * len(train_loader))
     return avg_train_loss
 
 def test_model(model, device, val_loader):

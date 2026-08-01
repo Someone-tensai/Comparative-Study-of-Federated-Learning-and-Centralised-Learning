@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 if os.path.exists("/kaggle/working"):
-    ROOT = Path("/kaggle/working/Comparative-Study-of-Federated-Learning-and-Centralised-Learning")
+    ROOT = Path("/kaggle/working/fed-dataset-sulav-new/To_Zip/")
 else:
     ROOT = Path(__file__).resolve().parents[1]
 RAW_DATA = ROOT/ "dataset" / "Epic and CSCR hospital Dataset"

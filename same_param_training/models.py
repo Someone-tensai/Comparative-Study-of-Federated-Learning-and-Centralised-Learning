@@ -40,7 +40,6 @@ def our_model(name, freeze_backbone=True):
     
     return model
 
-
 def freeze_resnet(model):
     for name,param in model.named_parameters():
         if "layer4" in name:

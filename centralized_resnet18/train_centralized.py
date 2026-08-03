@@ -43,7 +43,7 @@ def main() -> None:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
     run_name = f"{args.model_name}-centralized-{args.epochs}-{datetime.now():%Y-%m-%d}"
-    wandb.init(entity=args.wandb_entity, project=args.wandb_project, name=run_name, config=vars(args)) 
+    wandb.init(entity=args.wandb_entity, project= 'same_param_training', name=run_name, config=vars(args)) 
     train_loader = get_train_loader(args.batch_size)
     test_loader = get_test_loader(args.batch_size)
  

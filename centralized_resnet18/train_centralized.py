@@ -41,9 +41,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
-    run_name = f"{args.model_name}-centralized-{args.epochs}-{datetime.now():%Y-%m-%d}"
-    wandb.init(entity=args.wandb_entity, project=args.wandb_project, name=run_name, config=vars(args)) 
+
+    layer_tag = "layer4_in" if args.freeze_backbone else "full_unfreeze"
+    lr_tag = "Default" if args.learning_rate == 0.001 else "LRR"
+    run_name = f"{args.model_name}-{layer_tag}-centralized-{args.epochs}-{lr_tag}-{datetime.now():%Y-%m-%d}"
+    wandb.init(entity=args.wandb_entity, project= 'same_param_fed_training', name=run_name, config=vars(args)) 
     train_loader = get_train_loader(args.batch_size)
     test_loader = get_test_loader(args.batch_size)
  

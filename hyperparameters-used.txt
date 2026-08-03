@@ -66,3 +66,14 @@ fed-strategy = "fedavg"
 
 NOTEEEEEEE
 RUNS NOW INCLUDE LAYER 4 TOO
+
+
+6. Centralized ResNet50 baseline
+
+epochs = 20
+learning-rate = 0.0002
+batch-size = 32
+model-name = "resnet50"
+weight-decay = 0.0001
+freeze-backbone = true (layer4 in)
+training-type = centralized (no federation / no client split)

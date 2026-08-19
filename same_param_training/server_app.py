@@ -47,7 +47,7 @@ def main(grid: Grid, context: Context) -> None:
     date_tag = datetime.now().strftime("%Y-%m-%d")
 
     run_name = (
-        f"{model_name}-layer4_in-{mode}-{strat}-{num_clients}clients"
+        f"{model_name}-layer4_out-{mode}-{strat}-{num_clients}clients"
         f"-{num_rounds}-{augmented_tag}-{lr_tag}-{mu_tag}-{date_tag}"
     )
 

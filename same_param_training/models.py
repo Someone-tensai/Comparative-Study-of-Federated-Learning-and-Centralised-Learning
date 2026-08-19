@@ -10,12 +10,6 @@ def our_model(name, freeze_backbone=True):
 
     num_classes = 4
 
-    # FIX: previously these were three independent `if` blocks with no
-    # `else`/`raise`. If `name` didn't match any of them, `model` was never
-    # assigned and you'd get a confusing `UnboundLocalError` on `return
-    # model` instead of a clear message about what went wrong. Converted to
-    # if/elif/else with a ValueError on unknown names.
-
     if name == "resnet50":
         model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
@@ -50,15 +44,16 @@ def our_model(name, freeze_backbone=True):
 
     return model
 
+
 def freeze_resnet(model):
-    for name, param in model.named_parameters():
-        if "layer4" in name:
-            param.requires_grad = True
-        else:
-            param.requires_grad = False
+    for param in model.parameters():
+        param.requires_grad = False
+
     return model
+
 
 def freeze_vgg(model):
     for param in model.features.parameters():
         param.requires_grad = False
+
     return model

@@ -1,16 +1,51 @@
 import json
 from pathlib import Path
 from typing import Iterable
-from flwr.app import Message
-from flwr.serverapp.strategy import FedProx
+
+import torch
 import wandb
 
+from flwr.app import Message
+from flwr.serverapp.strategy import FedProx
+
+from same_param_training.models import our_model
+from same_param_training.dataset import get_test_loader
+from same_param_training.train import test_model
+
+
 class WandbFedProx(FedProx):
-    def __init__(self, *args, save_path: str = "results/history.json", **kwargs):
+    def __init__(
+        self,
+        *args,
+        model_name: str,
+        freeze_backbone: bool = True,
+        save_path: str = "results/history.json",
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
+
+        self.model_name = model_name
+        self.freeze_backbone = freeze_backbone
+
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
+
+        self.test_loader = get_test_loader()
+
+        # Built once, weights swapped in per round — same as WandbFedAvg.
+        self.eval_model = our_model(
+            self.model_name,
+            freeze_backbone=self.freeze_backbone,
+        ).to(self.device)
+
         self.save_path = Path(save_path)
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
         self.history = []
+
+    ####################################################################
+    # Helpers
+    ####################################################################
 
     def _get_round_entry(self, server_round):
         for entry in self.history:
@@ -24,6 +59,36 @@ class WandbFedProx(FedProx):
         with open(self.save_path, "w") as f:
             json.dump(self.history, f, indent=2)
 
+    def _save_checkpoint(self, server_round, arrays):
+        # FIX: same collision issue as WandbFedAvg — namespace by run_name
+        # (derived from save_path) so runs don't overwrite each other's
+        # checkpoints.
+        checkpoint_dir = Path("checkpoints") / self.save_path.stem
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            arrays.to_torch_state_dict(),
+            checkpoint_dir / f"round_{server_round}.pth"
+        )
+
+    ####################################################################
+    # Centralized evaluation
+    ####################################################################
+
+    def _evaluate_global_model(self, arrays):
+        self.eval_model.load_state_dict(arrays.to_torch_state_dict())
+
+        loss, acc = test_model(
+            self.eval_model,
+            self.device,
+            self.test_loader,
+        )
+
+        return loss, acc
+
+    ####################################################################
+    # Training aggregation
+    ####################################################################
+
     def aggregate_train(self, server_round, replies: Iterable[Message]):
         replies = list(replies)
         entry = self._get_round_entry(server_round)
@@ -35,11 +100,34 @@ class WandbFedProx(FedProx):
                 wandb.log({f"client_{cid}/train_loss": m["train_loss"]}, step=server_round)
 
         arrays, agg_metrics = super().aggregate_train(server_round, replies)
+
+        # Checkpoint each round — matches WandbFedAvg.
+        self._save_checkpoint(server_round, arrays)
+
         if agg_metrics is not None:
             entry["aggregated_train_loss"] = agg_metrics.get("train_loss")
             wandb.log({"train/aggregated_loss": agg_metrics.get("train_loss")}, step=server_round)
+
+        # Centralized global-test evaluation — matches WandbFedAvg.
+        test_loss, test_acc = self._evaluate_global_model(arrays)
+
+        entry["global_test_loss"] = test_loss
+        entry["global_test_accuracy"] = test_acc
+
+        wandb.log(
+            {
+                "global_test/loss": test_loss,
+                "global_test/accuracy": test_acc,
+            },
+            step=server_round,
+        )
+
         self._save()
         return arrays, agg_metrics
+
+    ####################################################################
+    # Client evaluation aggregation
+    ####################################################################
 
     def aggregate_evaluate(self, server_round, replies: Iterable[Message]):
         replies = list(replies)

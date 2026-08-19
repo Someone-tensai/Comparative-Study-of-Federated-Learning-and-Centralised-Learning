@@ -33,6 +33,18 @@ class WandbFedAvg(FedAvg):
 
         self.test_loader = get_test_loader()
 
+        # FIX: previously _evaluate_global_model() called our_model(...)
+        # every round, which re-constructs a fresh ResNet/VGG AND re-inits
+        # it from the ImageNet pretrained weights each time, only to
+        # immediately overwrite all of that with load_state_dict() a line
+        # later. That's a full pretrained-weight init thrown away every
+        # single round for nothing. Build the eval model once here instead,
+        # and just swap its weights in per round.
+        self.eval_model = our_model(
+            self.model_name,
+            freeze_backbone=self.freeze_backbone,
+        ).to(self.device)
+
         self.save_path = Path(save_path)
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -62,8 +74,13 @@ class WandbFedAvg(FedAvg):
 
     def _save_checkpoint(self, server_round, arrays):
 
-        checkpoint_dir = Path("checkpoints")
-        checkpoint_dir.mkdir(exist_ok=True)
+        # FIX: was Path("checkpoints") — the SAME folder for every run, so
+        # checkpoints/round_5.pth from one experiment got silently
+        # overwritten by round_5.pth from the next one. Namespace by
+        # run_name (derived from save_path, which is already
+        # results/{run_name}.json) so each run gets its own subfolder.
+        checkpoint_dir = Path("checkpoints") / self.save_path.stem
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
         torch.save(
             arrays.to_torch_state_dict(),
@@ -76,15 +93,13 @@ class WandbFedAvg(FedAvg):
 
     def _evaluate_global_model(self, arrays):
 
-        model = our_model(
-            self.model_name,
-            freeze_backbone=self.freeze_backbone,
-        ).to(self.device)
-
-        model.load_state_dict(arrays.to_torch_state_dict())
+        # FIX: reuse the model built once in __init__ instead of
+        # reconstructing (and re-initializing pretrained weights) every
+        # round. Only the weights change per round now.
+        self.eval_model.load_state_dict(arrays.to_torch_state_dict())
 
         loss, acc = test_model(
-            model,
+            self.eval_model,
             self.device,
             self.test_loader,
         )

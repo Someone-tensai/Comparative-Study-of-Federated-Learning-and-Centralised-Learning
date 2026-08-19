@@ -27,6 +27,13 @@ def main(grid: Grid, context: Context) -> None:
     # before a single round could run.
     freeze_backbone = context.run_config["freeze-backbone"]
 
+    # NEW: number of clients (SuperNodes) in this run. Grid.get_node_ids()
+    # returns the currently connected node IDs for the simulation, so this
+    # reflects whatever --num-supernodes / --client-resources you actually
+    # started with — no need to duplicate that number into run-config by
+    # hand and risk it drifting out of sync.
+    num_clients = len(list(grid.get_node_ids()))
+
     # FIX: the original built this with an f-string that reused double
     # quotes inside an outer double-quoted f-string
     # (f"...{"augmented" if augmented else ""}..."). That syntax is only
@@ -39,12 +46,15 @@ def main(grid: Grid, context: Context) -> None:
     mu_tag = str(proximal_mu) if proximal_mu != 0 else ""
     date_tag = datetime.now().strftime("%Y-%m-%d")
 
-    run_name = f"{model_name}-layer4_in-{mode}-{strat}-{num_rounds}-{augmented_tag}-{lr_tag}-{mu_tag}-{date_tag}"
+    run_name = (
+        f"{model_name}-layer4_in-{mode}-{strat}-{num_clients}clients"
+        f"-{num_rounds}-{augmented_tag}-{lr_tag}-{mu_tag}-{date_tag}"
+    )
 
     wandb.init(
         project="same_param_fed_training",
         name=run_name,
-        config=dict(context.run_config)
+        config={**dict(context.run_config), "num-clients": num_clients},
     )
 
     try:

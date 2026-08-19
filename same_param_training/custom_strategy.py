@@ -1,95 +1,245 @@
 import json
 from pathlib import Path
 from typing import Iterable
-from flwr.app import ArrayRecord, Message, MetricRecord
-from flwr.serverapp import Grid
-from flwr.serverapp.strategy import FedAvg
-import wandb
+
 import torch
+import wandb
+
+from flwr.app import Message
+from flwr.serverapp.strategy import FedAvg
+
+from same_param_training.models import our_model
+from same_param_training.dataset import get_test_loader
+from same_param_training.train import test_model
+
 
 class WandbFedAvg(FedAvg):
-    def __init__(self, *args, save_path : str = "results/history.json" ,**kwargs):
+    def __init__(
+        self,
+        *args,
+        model_name: str,
+        freeze_backbone: bool = True,
+        save_path: str = "results/history.json",
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
+
+        self.model_name = model_name
+        self.freeze_backbone = freeze_backbone
+
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
+
+        self.test_loader = get_test_loader()
+
         self.save_path = Path(save_path)
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
+
         self.history = []
 
-    # Helper function to create a entry such that agg_train and agg_eval are in the same entry
+    ####################################################################
+    # Helpers
+    ####################################################################
+
     def _get_round_entry(self, server_round):
-        
+
         for entry in self.history:
             if entry["round"] == server_round:
                 return entry
-        
-        entry = {"round" : server_round, "clients" : {}}
+
+        entry = {
+            "round": server_round,
+            "clients": {}
+        }
+
         self.history.append(entry)
         return entry
-    
-    # Save the history to a json file
+
     def _save(self):
         with open(self.save_path, "w") as f:
             json.dump(self.history, f, indent=2)
-            
+
     def _save_checkpoint(self, server_round, arrays):
+
         checkpoint_dir = Path("checkpoints")
         checkpoint_dir.mkdir(exist_ok=True)
 
-        state_dict = arrays.to_torch_state_dict()
-
         torch.save(
-            state_dict,
+            arrays.to_torch_state_dict(),
             checkpoint_dir / f"round_{server_round}.pth"
-        )   
-          
-    def aggregate_train(self, server_round, replies: Iterable[Message]):
-        replies = list(replies)
-        entry = self._get_round_entry(server_round)
-        
-        # Log the data in wandb and add to history
-        for msg in replies:
-            if msg.has_content():
-                m = msg.content["metrics"]
-                cid = m.get("client-id", "unknown")
-                entry["clients"].setdefault(str(cid), {})["train_loss"] = m["train_loss"]                
-                wandb.log(
-                    {f"client_{cid}/train_loss": m["train_loss"]},
-                    step=server_round,
-                )
+        )
 
-        # Actually call the aggregator from FedAvg
-        arrays, agg_metrics = super().aggregate_train(server_round, replies)
+    ####################################################################
+    # Centralized evaluation
+    ####################################################################
+
+    def _evaluate_global_model(self, arrays):
+
+        model = our_model(
+            self.model_name,
+            freeze_backbone=self.freeze_backbone,
+        ).to(self.device)
+
+        model.load_state_dict(arrays.to_torch_state_dict())
+
+        loss, acc = test_model(
+            model,
+            self.device,
+            self.test_loader,
+        )
+
+        return loss, acc
+
+    ####################################################################
+    # Training aggregation
+    ####################################################################
+
+    def aggregate_train(self, server_round, replies: Iterable[Message]):
+
+        replies = list(replies)
+
+        entry = self._get_round_entry(server_round)
+
+        ##########################################################
+        # Client train metrics
+        ##########################################################
+
+        for msg in replies:
+
+            if not msg.has_content():
+                continue
+
+            m = msg.content["metrics"]
+
+            cid = m.get("client-id", "unknown")
+
+            entry["clients"].setdefault(str(cid), {})
+
+            entry["clients"][str(cid)]["train_loss"] = m["train_loss"]
+
+            wandb.log(
+                {
+                    f"client_{cid}/train_loss": m["train_loss"]
+                },
+                step=server_round,
+            )
+
+        ##########################################################
+        # Flower aggregation
+        ##########################################################
+
+        arrays, agg_metrics = super().aggregate_train(
+            server_round,
+            replies,
+        )
+
+        ##########################################################
+        # Save checkpoint
+        ##########################################################
 
         self._save_checkpoint(server_round, arrays)
-        # Log the aggegrated metrics in wand and history
+
+        ##########################################################
+        # Aggregated train metrics
+        ##########################################################
+
         if agg_metrics is not None:
-            entry["aggregated_train_loss"] = agg_metrics.get("train_loss")
-            wandb.log({"train/aggregated_loss": agg_metrics.get("train_loss")}, step=server_round)
+
+            entry["aggregated_train_loss"] = agg_metrics.get(
+                "train_loss"
+            )
+
+            wandb.log(
+                {
+                    "train/aggregated_loss":
+                        agg_metrics.get("train_loss")
+                },
+                step=server_round,
+            )
+
+        ##########################################################
+        # NEW: Centralized evaluation
+        ##########################################################
+
+        test_loss, test_acc = self._evaluate_global_model(arrays)
+
+        entry["global_test_loss"] = test_loss
+        entry["global_test_accuracy"] = test_acc
+
+        wandb.log(
+            {
+                "global_test/loss": test_loss,
+                "global_test/accuracy": test_acc,
+            },
+            step=server_round,
+        )
+
         self._save()
+
         return arrays, agg_metrics
 
+    ####################################################################
+    # Client evaluation aggregation
+    ####################################################################
 
-    def aggregate_evaluate(self, server_round, replies: Iterable[Message]):
+    def aggregate_evaluate(
+        self,
+        server_round,
+        replies: Iterable[Message],
+    ):
+
         replies = list(replies)
+
         entry = self._get_round_entry(server_round)
 
         for msg in replies:
-            if msg.has_content():
-                m = msg.content["metrics"]
-                cid = m.get("client-id", "unknown")
-                entry["clients"].setdefault(str(cid), {})["eval_loss"] = m["eval_loss"]
-                entry["clients"][str(cid)]["eval_accuracy"] = m["eval_accuracy"]
-                wandb.log({
+
+            if not msg.has_content():
+                continue
+
+            m = msg.content["metrics"]
+
+            cid = m.get("client-id", "unknown")
+
+            entry["clients"].setdefault(str(cid), {})
+
+            entry["clients"][str(cid)]["eval_loss"] = m["eval_loss"]
+            entry["clients"][str(cid)]["eval_accuracy"] = m["eval_accuracy"]
+
+            wandb.log(
+                {
                     f"client_{cid}/eval_loss": m["eval_loss"],
                     f"client_{cid}/eval_accuracy": m["eval_accuracy"],
-                }, step=server_round)
+                },
+                step=server_round,
+            )
 
-        agg_metrics = super().aggregate_evaluate(server_round, replies)
+        agg_metrics = super().aggregate_evaluate(
+            server_round,
+            replies,
+        )
+
         if agg_metrics is not None:
-            entry["aggregated_eval_loss"] = agg_metrics.get("eval_loss")
-            entry["aggregated_eval_accuracy"] = agg_metrics.get("eval_accuracy")
-            wandb.log({
-                "eval/aggregated_loss": agg_metrics.get("eval_loss"),
-                "eval/aggregated_accuracy": agg_metrics.get("eval_accuracy"),
-            }, step=server_round)
+
+            entry["aggregated_eval_loss"] = agg_metrics.get(
+                "eval_loss"
+            )
+
+            entry["aggregated_eval_accuracy"] = agg_metrics.get(
+                "eval_accuracy"
+            )
+
+            wandb.log(
+                {
+                    "eval/aggregated_loss":
+                        agg_metrics.get("eval_loss"),
+                    "eval/aggregated_accuracy":
+                        agg_metrics.get("eval_accuracy"),
+                },
+                step=server_round,
+            )
+
         self._save()
+
         return agg_metrics

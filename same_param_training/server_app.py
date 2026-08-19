@@ -49,7 +49,7 @@ def main(grid: Grid, context: Context) -> None:
         state_dict = final_arrays.to_torch_state_dict()
         model.load_state_dict(state_dict)
         Path("results").mkdir(exist_ok=True)
-        torch.save(model.state_dict(), f"kaggle/working/results/{run_name}.pth")
+        torch.save(model.state_dict(), f"results/{run_name}.pth")
         
     finally:
         wandb.finish()

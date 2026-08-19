@@ -17,6 +17,10 @@
 ```bash
    python -m preprocessing.pipeline.split --clients 3 --mode both
 ```
+3. (Optional) Run `augment.py` from root to reduce per-client class imbalance in the split(s) — tops up sparse classes within each client using augmented copies of that client's own images, without touching cross-client skew. Produces `clients_N_augmented_iid` / `clients_N_augmented_noniid` alongside the originals.
+```bash
+   python -m preprocessing.pipeline.augment --clients 3 --mode both
+```
 
 ### C.1 Weights & Biases Setup (for experiment tracking)
 

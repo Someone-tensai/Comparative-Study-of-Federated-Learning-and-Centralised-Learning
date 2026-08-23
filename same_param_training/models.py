@@ -46,8 +46,13 @@ def our_model(name, freeze_backbone=True):
 
 
 def freeze_resnet(model):
+    # Freeze the entire ResNet backbone first
     for param in model.parameters():
         param.requires_grad = False
+
+    # Unfreeze layer4
+    for param in model.layer4.parameters():
+        param.requires_grad = True
 
     return model
 

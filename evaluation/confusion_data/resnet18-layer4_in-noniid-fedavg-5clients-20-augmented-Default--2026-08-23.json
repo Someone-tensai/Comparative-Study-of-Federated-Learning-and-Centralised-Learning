@@ -1,0 +1,71 @@
+{
+    "model_file": "resnet18-layer4_in-noniid-fedavg-5clients-20-augmented-Default--2026-08-23.pth",
+    "architecture": "resnet18",
+    "classes": [
+        "glioma",
+        "meningioma",
+        "notumor",
+        "pituitary"
+    ],
+    "confusion_matrix": [
+        [
+            707,
+            23,
+            18,
+            7
+        ],
+        [
+            88,
+            432,
+            4,
+            22
+        ],
+        [
+            1,
+            0,
+            485,
+            1
+        ],
+        [
+            0,
+            0,
+            0,
+            626
+        ]
+    ],
+    "metrics": {
+        "accuracy": 0.932062966031483,
+        "macro_precision": 0.9371293229940947,
+        "macro_recall": 0.930881464021924,
+        "macro_f1": 0.9318152370693561,
+        "weighted_precision": 0.9329842469645413,
+        "weighted_recall": 0.932062966031483,
+        "weighted_f1": 0.9304788555312259,
+        "per_class": {
+            "glioma": {
+                "precision": 0.8881909547738693,
+                "recall": 0.9364238410596026,
+                "f1": 0.9116698903932946,
+                "support": 755
+            },
+            "meningioma": {
+                "precision": 0.9494505494505494,
+                "recall": 0.7912087912087912,
+                "f1": 0.8631368631368631,
+                "support": 546
+            },
+            "notumor": {
+                "precision": 0.9566074950690335,
+                "recall": 0.9958932238193019,
+                "f1": 0.9758551307847082,
+                "support": 487
+            },
+            "pituitary": {
+                "precision": 0.9542682926829268,
+                "recall": 1.0,
+                "f1": 0.9765990639625585,
+                "support": 626
+            }
+        }
+    }
+}

@@ -21,8 +21,11 @@ from same_param_training.dataset import get_test_loader
 # CONFIG
 # ============================================================
 
-MODEL_DIR = Path("models")
-OUTPUT_DIR = Path("evaluation")
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parent
+
+MODEL_DIR = REPO_ROOT / "models"
+OUTPUT_DIR = BASE_DIR
 
 CM_DIR = OUTPUT_DIR / "confusion_matrices"
 DATA_DIR = OUTPUT_DIR / "confusion_data"
